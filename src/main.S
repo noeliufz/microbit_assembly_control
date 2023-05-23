@@ -48,7 +48,7 @@ main:
   @ 3: enable GPIOTE (interrupt #6 = NVIC_GPIOTE_ID) in NVIC_ISER0
   @ NVIC_ISER0: B3.4.4 in ARMv7-M Reference Manual
   ldr r0, =NVIC_ISER0
-  ldr r1, =(1 << 6 | 1 << 7) @ set the 6th bit since NVIC_GPIOTE_ID = 6
+  ldr r1, =(1 << 6) @ set the 6th bit since NVIC_GPIOTE_ID = 6
   str r1, [r0]
 
   @ set systick priority, systick > GPIOTE
@@ -85,7 +85,7 @@ word_loop:
   @ store the registers
   push {r0, r1, r2, r3, lr}
   @ load the "HELLO" display columns
-  ldr r3, =hello_row
+  ldr r3, =hello_col
   @ load the pointer to start the display with
   @ it will increment by system time ticker
   ldr r2, =word_pointer
@@ -313,6 +313,7 @@ buttonB_pressed:
   ldr r1, =0
   ldr r0, =GPIOTE_EVENTS_IN1
   str r1, [r0]
+  @ reset the word_pointer to 0 to restart displaying
   ldr r0, =word_pointer
   str r1, [r0]
   ldr r1, =4
@@ -323,7 +324,7 @@ buttonB_pressed:
 
 
 .data
-hello_row:
+hello_col:
   @ word "HELLO" display column status
   @ blank
   .hword 0b00000
@@ -367,14 +368,21 @@ hello_row:
   .hword 0b00000
   .hword 0b00000
 word_pointer:
+  @ pointer for word display loop
+  @ point to the start byte to start display leds
   .word 0 
 
 pulse:
+  @ for breathing heart loop
   .word 1 @ time of display
   .word 0 @ direction, 0 forward, 1 backward
 
 loop_option:
+  @ option address for main loop to choose from: breathing heart loop; word display loop
   .word beat_loop
   .word word_loop
 loop_pointer:
+  @ pointer for main loop to choose
+  @ it will be updated by interrupts
+  @ default to start word loop so set the value to 4 (1 word for 4 bytes)
   .word 4
